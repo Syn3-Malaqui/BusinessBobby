@@ -1,3 +1,4 @@
-# React + TypeScript + Vite
+# Next.js migration notes
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+- Use `npm run dev` to start Next.js at http://localhost:3000
+- Vite scripts preserved as `dev:vite` and `build:vite` during transition

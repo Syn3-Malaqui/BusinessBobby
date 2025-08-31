@@ -1,13 +1,13 @@
 import React from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
 const OTO: React.FC = () => {
-  const [params] = useSearchParams()
-  const navigate = useNavigate()
-  const step = params.get('step') || '1'
-  const base = (params.get('base') || '').toLowerCase()
-  const sessionId = params.get('session_id') || ''
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const step = searchParams.get('step') || '1'
+  const base = (searchParams.get('base') || '').toLowerCase()
+  const sessionId = searchParams.get('session_id') || ''
 
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
@@ -68,16 +68,24 @@ const OTO: React.FC = () => {
     window.location.replace(url.toString())
   }
 
+  const navigateToStep = (newStep: string) => {
+    const params = new URLSearchParams()
+    params.set('step', newStep)
+    params.set('base', base)
+    if (sessionId) params.set('session_id', sessionId)
+    router.push(`/oto?${params.toString()}`)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg overflow-hidden text-center p-10">
         {base.includes('general') && step === '1' && (
           <>
             <h1 className="text-3xl font-bold mb-4">Upgrade to VIP for only $150 more!</h1>
-            <p className="text-gray-600 mb-6">Get VIP seating, professional photo shoot, and priority networking. You’ve already paid $199 — upgrade today for just $150 more.</p>
+            <p className="text-gray-600 mb-6">Get VIP seating, professional photo shoot, and priority networking. You've already paid $199 — upgrade today for just $150 more.</p>
             <div className="grid gap-3">
               <Button className="w-full" onClick={() => goUpgrade('vip')}>Yes, Upgrade Me to VIP ($349 Total)</Button>
-              <button className="text-sm text-gray-500 underline" onClick={() => navigate(`/oto?step=2&base=${base}&session_id=${sessionId}`)}>No thanks, keep me at GA</button>
+              <button className="text-sm text-gray-500 underline" onClick={() => navigateToStep('2')}>No thanks, keep me at GA</button>
             </div>
           </>
         )}
@@ -99,7 +107,7 @@ const OTO: React.FC = () => {
             <p className="text-gray-600 mb-6">Unlock Platinum perks: 2 months Business Builder Membership, AI Mastermind Certification Ticket, SEO Nationwide Membership.</p>
             <div className="grid gap-3">
               <Button className="w-full" onClick={() => goUpgrade('platinum')}>Yes, Upgrade Me to Platinum ($499 Total)</Button>
-              <button className="text-sm text-gray-500 underline" onClick={() => navigate(`/oto?step=2&base=${base}&session_id=${sessionId}`)}>No thanks</button>
+              <button className="text-sm text-gray-500 underline" onClick={() => navigateToStep('2')}>No thanks</button>
             </div>
           </>
         )}
@@ -121,7 +129,7 @@ const OTO: React.FC = () => {
             <p className="text-gray-600 mb-6">Certify up to 5 of your staff/team members.</p>
             <div className="grid gap-3">
               <Button className="w-full" onClick={() => goAddon('team_cert')}>Yes, Certify My Team ($500)</Button>
-              <button className="text-sm text-gray-500 underline" onClick={() => navigate(`/oto?step=2&base=${base}&session_id=${sessionId}`)}>No thanks</button>
+              <button className="text-sm text-gray-500 underline" onClick={() => navigateToStep('2')}>No thanks</button>
             </div>
           </>
         )}

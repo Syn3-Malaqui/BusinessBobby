@@ -1,14 +1,14 @@
 import React from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
 const ThankYou: React.FC = () => {
-  const [params] = useSearchParams()
-  const navigate = useNavigate()
-  const tier = (params.get('tier') || '').toLowerCase()
-  const previousSessionId = params.get('session_id') || ''
-  const upgradedJustNow = params.get('upgraded') === 'true'
-  const doneOto = params.get('doneOto') === '1'
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const tier = (searchParams.get('tier') || '').toLowerCase()
+  const previousSessionId = searchParams.get('session_id') || ''
+  const upgradedJustNow = searchParams.get('upgraded') === 'true'
+  const doneOto = searchParams.get('doneOto') === '1'
 
   const PRICE_BY_TIER: Record<string, number> = {
     general: 19900,
@@ -119,7 +119,7 @@ const ThankYou: React.FC = () => {
         <p className="text-sm text-gray-500 mb-8">You purchased: <span className="font-semibold text-gray-900">{currentName}</span> for <span className="font-semibold text-gray-900">{formatUsd(currentPaid)}</span></p>
 
         <div className="grid grid-cols-1 gap-3">
-          <Button variant="outline" onClick={() => navigate('/')}>Return Home</Button>
+          <Button variant="outline" onClick={() => router.push('/')}>Return Home</Button>
         </div>
       </div>
     </div>
