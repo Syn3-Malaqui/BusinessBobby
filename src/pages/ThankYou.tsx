@@ -97,7 +97,7 @@ const ThankYou: React.FC = () => {
     }
     persist()
     // no cleanup needed
-  }, [previousSessionId])
+  }, [previousSessionId, currentPaid, currentKey])
 
   React.useEffect(() => {
     // Redirect to OTO if not completed and we have session

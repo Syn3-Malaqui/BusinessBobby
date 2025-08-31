@@ -1,10 +1,7 @@
 import "../src/index.css";
-import type { Metadata } from "next";
+import { metadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  title: "BusinessBobby",
-  description: "Landing page",
-};
+export { metadata };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
