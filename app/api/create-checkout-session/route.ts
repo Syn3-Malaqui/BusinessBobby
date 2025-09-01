@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { stripe, PRODUCT_ID_BY_TIER, resolveOrCreateOneTimePriceId } from '../_lib/stripe'
 
 export const runtime = 'nodejs'
 
@@ -10,18 +11,6 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     console.log('Creating checkout session...')
-    
-    // Check if Stripe is properly configured
-    if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('STRIPE_SECRET_KEY is not configured')
-      return NextResponse.json({ 
-        error: 'Payment system not configured',
-        details: process.env.NODE_ENV === 'development' ? 'Missing STRIPE_SECRET_KEY' : undefined
-      }, { status: 500 })
-    }
-    
-    // Import Stripe only after checking environment variables
-    const { stripe, PRODUCT_ID_BY_TIER, resolveOrCreateOneTimePriceId } = await import('../_lib/stripe')
     
     const body = await req.json().catch(() => ({} as any))
     console.log('Request body:', JSON.stringify(body, null, 2))
