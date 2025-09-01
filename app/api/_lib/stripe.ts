@@ -9,9 +9,9 @@ export const stripe = new Stripe(STRIPE_SECRET_KEY, {
 })
 
 export const PRODUCT_ID_BY_TIER: Record<string, string> = {
-  general: 'prod_SyCwLr1cFrZDB4',
-  vip: 'prod_SyCwEsCfVflbrW',
-  platinum: 'prod_SyCwOGd1XTRugQ',
+  general: 'prod_SxDmN6Cn3zLG2s',
+  vip: 'prod_SxDcKhkgIqgJDE',
+  platinum: 'prod_SxDcCSKiiCauRD',
 }
 
 export const PRICE_CENTS_BY_TIER: Record<string, number> = {
