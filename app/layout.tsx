@@ -1,7 +1,11 @@
 import "./globals.css";
-import { metadata } from "@/lib/metadata";
+import type { Metadata } from "next";
 
-export { metadata };
+export const metadata: Metadata = {
+  title: "BusinessBobby",
+  description: "Landing page",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
