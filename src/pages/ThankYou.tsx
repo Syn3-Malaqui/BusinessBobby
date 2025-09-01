@@ -2,6 +2,7 @@ import React from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2, Receipt, Calendar as CalendarIcon, Home } from 'lucide-react'
+import { sendThankYouEmail } from '@/app/api/_lib/email'
 
 const ThankYou: React.FC = () => {
   const searchParams = useSearchParams()
@@ -59,6 +60,20 @@ const ThankYou: React.FC = () => {
       didRun = true
       try {
         await fetch(`/api/checkout-complete?session_id=${encodeURIComponent(previousSessionId)}`)
+        // After persisting, send final thank-you email once, client-triggered
+        try {
+          const res = await fetch('/api/test/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: '',
+              tier: effectiveTierKey || tier,
+              origin: window.location.origin,
+              sessionId: previousSessionId,
+            }),
+          })
+          // ignore result; endpoint is idempotent by session now
+        } catch {}
         // @ts-ignore
         if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
           // @ts-ignore

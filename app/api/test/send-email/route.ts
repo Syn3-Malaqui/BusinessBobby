@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sendThankYouEmail } from '../../_lib/email'
+import { stripe } from '../../_lib/stripe'
+import { claimThankYouSendBySession } from '../../_lib/db'
 
 export const runtime = 'nodejs'
 
@@ -8,16 +10,28 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({} as any))
     const to = String(body.to || '')
     const tier = (body.tier as 'general' | 'vip' | 'platinum') || 'general'
-    const fullName = String(body.fullName || 'Test User')
+    const fullName = String(body.fullName || '')
     const origin = String(body.origin || '')
+    const sessionId = String(body.sessionId || '')
 
-    if (!to) return NextResponse.json({ error: 'Missing to' }, { status: 400 })
-
-    if (process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ error: 'Disabled in production' }, { status: 403 })
+    let emailTo = to
+    let fullNameFinal = fullName
+    if (!emailTo && sessionId) {
+      try {
+        const s = await stripe.checkout.sessions.retrieve(sessionId)
+        emailTo = (s.customer_details && s.customer_details.email) || ''
+        fullNameFinal = (s.metadata && (s.metadata as any).fullName) || fullName || ''
+      } catch {}
     }
 
-    await sendThankYouEmail({ toEmail: to, fullName, tier, origin })
+    if (!emailTo) return NextResponse.json({ error: 'Missing to' }, { status: 400 })
+
+    // Acquire send-lock via DB to avoid race duplicates
+    if (sessionId) {
+      const claimed = await claimThankYouSendBySession(sessionId)
+      if (!claimed) return NextResponse.json({ ok: true, skipped: true })
+    }
+    await sendThankYouEmail({ toEmail: emailTo, fullName: fullNameFinal, tier, origin })
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     console.error('Send test email failed', err)

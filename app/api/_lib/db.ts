@@ -66,6 +66,7 @@ export async function initDb(): Promise<void> {
       await db.query(`ALTER TABLE checkouts ADD COLUMN IF NOT EXISTS oto_kind TEXT;`)
       await db.query(`ALTER TABLE checkouts ADD COLUMN IF NOT EXISTS base_amount_cents INTEGER DEFAULT 0;`)
       await db.query(`ALTER TABLE checkouts ADD COLUMN IF NOT EXISTS addons_amount_cents INTEGER DEFAULT 0;`)
+      await db.query(`ALTER TABLE checkouts ADD COLUMN IF NOT EXISTS thankyou_sent BOOLEAN DEFAULT false;`)
       // Ensure unique constraint on customer_id to support upserts when email is missing
       const custConstraint = await db.query(`
         SELECT constraint_name 
@@ -219,6 +220,40 @@ export async function hasSession(sessionId: string): Promise<boolean> {
   if (!db) return false
   try {
     const res = await db.query('SELECT 1 FROM checkouts WHERE session_id = $1 LIMIT 1', [sessionId])
+    return res.rowCount > 0
+  } catch {
+    return false
+  }
+}
+
+export async function markThankYouSentBySession(sessionId: string): Promise<void> {
+  const db = getPool()
+  if (!db) return
+  try {
+    await db.query('UPDATE checkouts SET thankyou_sent = true WHERE session_id = $1', [sessionId])
+  } catch {}
+}
+
+export async function isThankYouSentBySession(sessionId: string): Promise<boolean> {
+  const db = getPool()
+  if (!db) return false
+  try {
+    const res = await db.query('SELECT thankyou_sent FROM checkouts WHERE session_id = $1 LIMIT 1', [sessionId])
+    if (res.rowCount === 0) return false
+    return !!res.rows[0]?.thankyou_sent
+  } catch {
+    return false
+  }
+}
+
+export async function claimThankYouSendBySession(sessionId: string): Promise<boolean> {
+  const db = getPool()
+  if (!db) return false
+  try {
+    const res = await db.query(
+      'UPDATE checkouts SET thankyou_sent = true WHERE session_id = $1 AND thankyou_sent = false RETURNING 1',
+      [sessionId]
+    )
     return res.rowCount > 0
   } catch {
     return false

@@ -4,10 +4,13 @@ import { buildIcsContent, buildGoogleCalendarUrl, getServeToScaleCalendarConfig 
 
 type TicketTier = 'general' | 'vip' | 'platinum'
 
-const GMAIL_USER = process.env.SMTP_USER || 'Servetoscale@gmail.com'
-const GMAIL_PASS = process.env.SMTP_PASS || 'October2324'
+const GMAIL_USER = process.env.SMTP_USER || ''
+const GMAIL_PASS = process.env.SMTP_PASS || ''
 
 export function createGmailTransport() {
+  if (!GMAIL_USER || !GMAIL_PASS) {
+    throw new Error('Missing SMTP credentials. Set SMTP_USER and SMTP_PASS in environment.')
+  }
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {

@@ -102,21 +102,7 @@ export async function POST(req: NextRequest) {
         console.error('Failed to record checkout from webhook:', dbErr)
       }
 
-      try {
-        if (!isAddon && email && selectedTier) {
-          const tierNormalized = ['general', 'vip', 'platinum'].includes(selectedTier)
-            ? (selectedTier as 'general' | 'vip' | 'platinum')
-            : (selectedTier === 'platinum_elite' ? 'platinum' : 'general')
-          await sendThankYouEmail({
-            toEmail: email,
-            fullName,
-            tier: tierNormalized,
-            origin,
-          })
-        }
-      } catch (mailErr) {
-        console.error('Failed to send thank-you email:', mailErr)
-      }
+      // No email here; email will be sent from Thank You page after final tier is determined
     }
 
     return NextResponse.json({ received: true })
