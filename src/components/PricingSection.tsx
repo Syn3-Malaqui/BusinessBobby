@@ -71,6 +71,8 @@ const PricingSection: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isFormValid = useMemo(() => {
     const hasName = fullName.trim().length > 1;
@@ -81,10 +83,14 @@ const PricingSection: React.FC = () => {
 
   const handleOpenForTier = (tierName: string) => {
     setSelectedTier(tierName);
+    setError(null);
     setIsDialogOpen(true);
   };
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
+    setIsLoading(true);
+    setError(null);
+    
     const origin = window.location.origin;
     const tierKey = (selectedTier || '').toLowerCase();
     let tier: 'general' | 'vip' | 'platinum' | null = null;
@@ -93,33 +99,53 @@ const PricingSection: React.FC = () => {
     else if (tierKey.includes('platinum')) tier = 'platinum';
 
     if (!tier) {
-      setIsDialogOpen(false);
+      setError('Invalid tier selected');
+      setIsLoading(false);
       return;
     }
 
-    fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      console.log('Sending checkout request:', {
         tier,
         fullName,
         contactNumber,
         email,
-        origin,
-      }),
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error('Failed to create session');
-        const data = await res.json();
-        if (data?.url) {
-          window.location.href = data.url as string;
-        } else {
-          setIsDialogOpen(false);
-        }
-      })
-      .catch(() => {
-        setIsDialogOpen(false);
+        origin
       });
+
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier,
+          fullName,
+          contactNumber,
+          email,
+          origin,
+        }),
+      });
+
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Checkout error:', errorData);
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Checkout response:', data);
+      
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (err) {
+      console.error('Checkout failed:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create checkout session');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -460,11 +486,17 @@ const PricingSection: React.FC = () => {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="jane@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
+            
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                <p className="text-red-800 text-sm">{error}</p>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
-            <Button onClick={handleProceed} disabled={!isFormValid}>
-              Proceed to Payment
+            <Button onClick={handleProceed} disabled={!isFormValid || isLoading}>
+              {isLoading ? 'Creating checkout...' : 'Proceed to Payment'}
             </Button>
           </DialogFooter>
         </DialogContent>
