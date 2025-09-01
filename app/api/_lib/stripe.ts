@@ -1,6 +1,10 @@
 import Stripe from 'stripe'
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+// Hardcoded environment variables for deployment
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_51RylV3CVXjNEcso7W9XVjT0LbhDqxTBRoGisqidn8AmXthc4eYUG1gcRvPLSyjHJPwEBz7nforD6qqhRexcinN7Z00QxqsUMvw'
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres.fgtzsslxumdlmbmrrxrc:yM5Z5EtPgnwocXzw@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres'
+
+export const stripe = new Stripe(STRIPE_SECRET_KEY, {
   apiVersion: '2024-06-20',
 })
 
