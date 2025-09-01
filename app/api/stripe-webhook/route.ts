@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe, PRICE_CENTS_BY_TIER } from '../_lib/stripe'
-import { initDb, recordCheckout } from '../_lib/db'
+import { sendThankYouEmail } from '../_lib/email'
+import { initDb, recordCheckout, hasSession } from '../_lib/db'
 
 export const config = {
   api: {
@@ -43,6 +44,11 @@ export async function POST(req: NextRequest) {
       const isUpgrade = ((session.metadata && session.metadata.isUpgrade) || 'false') === 'true'
       let fullName = (session.metadata && session.metadata.fullName) || null
       const contactNumber = (session.metadata && session.metadata.contactNumber) || null
+      const isAddon = ((session.metadata && session.metadata.isAddon) || 'false') === 'true'
+      const origin = (session.metadata && session.metadata.origin) || undefined
+      const otoStepRaw = (session.metadata && (session.metadata.otoStep || session.metadata.oto_step)) || undefined
+      const otoStep = otoStepRaw ? parseInt(String(otoStepRaw), 10) : undefined
+      const otoKind = (session.metadata && (session.metadata.otoKind || session.metadata.oto_kind)) || undefined
 
       if ((!email || !fullName) && customerId) {
         try {
@@ -58,15 +64,23 @@ export async function POST(req: NextRequest) {
         } catch {}
       }
 
-      const finalAmountCents = (() => {
-        if (isUpgrade && selectedTier && PRICE_CENTS_BY_TIER[selectedTier]) {
-          return PRICE_CENTS_BY_TIER[selectedTier]
-        }
-        return amountTotal
+      const isPlatinum = selectedTier === 'platinum'
+      const baseAmountCents = (() => {
+        // Only treat as a base ticket when not an addon; and if it's an upgrade, base becomes target tier price
+        if (isAddon) return 0
+        if (isUpgrade && selectedTier && PRICE_CENTS_BY_TIER[selectedTier]) return PRICE_CENTS_BY_TIER[selectedTier]
+        if (selectedTier && PRICE_CENTS_BY_TIER[selectedTier]) return PRICE_CENTS_BY_TIER[selectedTier]
+        return 0
       })()
+
+      const addonsAmountCents = isAddon ? (amountTotal || 0) : 0
+      const finalAmountCents = Math.max(baseAmountCents, 0) + Math.max(addonsAmountCents, 0)
 
       try {
         await initDb()
+        if (sessionId && (await hasSession(sessionId))) {
+          return NextResponse.json({ received: true, skipped: true })
+        }
         await recordCheckout({
           sessionId,
           customerId,
@@ -76,11 +90,32 @@ export async function POST(req: NextRequest) {
           selectedTier,
           fromTier,
           amountCents: finalAmountCents,
-          isUpgrade,
-          isAddon: (session.metadata && session.metadata.isAddon) === 'true',
+          baseAmountCents: baseAmountCents,
+          addonsAmountCents: addonsAmountCents,
+          // An addon alone is not an upgrade. Only OTO1 upgrades.
+          isUpgrade: isUpgrade || (typeof otoStep === 'number' && otoStep === 1),
+          isAddon,
+          otoStep,
+          otoKind,
         })
       } catch (dbErr) {
         console.error('Failed to record checkout from webhook:', dbErr)
+      }
+
+      try {
+        if (!isAddon && email && selectedTier) {
+          const tierNormalized = ['general', 'vip', 'platinum'].includes(selectedTier)
+            ? (selectedTier as 'general' | 'vip' | 'platinum')
+            : (selectedTier === 'platinum_elite' ? 'platinum' : 'general')
+          await sendThankYouEmail({
+            toEmail: email,
+            fullName,
+            tier: tierNormalized,
+            origin,
+          })
+        }
+      } catch (mailErr) {
+        console.error('Failed to send thank-you email:', mailErr)
       }
     }
 

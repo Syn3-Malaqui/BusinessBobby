@@ -1,0 +1,2 @@
+DATABASE_URL = 'postgresql://postgres.fgtzsslxumdlmbmrrxrc:yM5Z5EtPgnwocXzw@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres'
+STRIPE_SECRET_KEY = 'sk_test_51RylV3CVXjNEcso7W9XVjT0LbhDqxTBRoGisqidn8AmXthc4eYUG1gcRvPLSyjHJPwEBz7nforD6qqhRexcinN7Z00QxqsUMvw'

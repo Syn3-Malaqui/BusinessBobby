@@ -1,0 +1,42 @@
+# Allow all .env files for editing and AI context
+# !.env*  # Explicitly include all environment files
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# Cache and temporary files
+.cache/
+.parcel-cache/
+tmp/
+temp/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Lock files (not needed for editing)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Git internals
+.git/
+
+# Editor temp files
+.vscode/settings.json
+.idea/
+
+# Note: .env files are intentionally NOT ignored to allow full editing capabilities 

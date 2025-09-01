@@ -55,6 +55,9 @@ export async function GET(req: Request) {
       contactNumber: priorMetadata.contactNumber || '',
       fromSessionId: fromSessionId || '',
       isUpgrade: 'true',
+      origin,
+      otoStep: '1',
+      otoKind: 'upgrade',
     }
 
     const session = await stripe.checkout.sessions.create({

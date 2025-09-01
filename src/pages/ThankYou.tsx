@@ -1,6 +1,7 @@
 import React from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { CheckCircle2, Receipt, Calendar as CalendarIcon, Home } from 'lucide-react'
 
 const ThankYou: React.FC = () => {
   const searchParams = useSearchParams()
@@ -9,6 +10,8 @@ const ThankYou: React.FC = () => {
   const previousSessionId = searchParams.get('session_id') || ''
   const upgradedJustNow = searchParams.get('upgraded') === 'true'
   const doneOto = searchParams.get('doneOto') === '1'
+  const addon = (searchParams.get('addon') || '').toLowerCase()
+  const became = (searchParams.get('became') || '').toLowerCase()
 
   const PRICE_BY_TIER: Record<string, number> = {
     general: 19900,
@@ -22,59 +25,32 @@ const ThankYou: React.FC = () => {
     platinum: 'Platinum Elite',
   }
 
-  const UPGRADE_FEATURES_BY_TARGET: Record<string, string[]> = {
-    vip: [
-      'Preferred seating in VIP section',
-      'Evening networking mixer invitation',
-      'Professional headshot (1 edited photo)',
-      'NCPC SEO Statewide listing (Value $300)',
-    ],
-    platinum: [
-      'AI Mastermind Certification ticket',
-      'Professional photo shoot (3 edited headshots)',
-      '2 months Mastermind Business Builder membership',
-      'NCPC SEO Nationwide listing (Value $700)',
-      'VIP lunch with founders & business coaches',
-    ],
+  const ADDON_NAME: Record<string, string> = {
+    ai_cert: 'AI Mastermind Certification',
+    recordings_kit: 'Event Recordings + AI Starter Kit',
+    team_cert: 'Team AI Certification Package',
+    membership_399: 'Business Builder Membership (Monthly)',
   }
 
-  const getUpgradeTarget = () => {
-    if (tier.includes('general')) return 'vip'
-    if (tier.includes('vip')) return 'platinum'
-    return null
-  }
-
-  const upgradeTarget = upgradedJustNow ? null : getUpgradeTarget()
-
-  const computeUpgradeDeltaCents = () => {
-    if (!upgradeTarget) return 0
-    const current = tier.includes('general') ? 'general' : tier.includes('vip') ? 'vip' : 'platinum'
-    const currentPrice = PRICE_BY_TIER[current] || 0
-    const targetPrice = PRICE_BY_TIER[upgradeTarget] || 0
-    const delta = Math.max(0, targetPrice - currentPrice)
-    return delta
+  const ADDON_PRICE: Record<string, number> = {
+    ai_cert: 19900,
+    recordings_kit: 9700,
+    team_cert: 50000,
+    membership_399: 39900,
   }
 
   const formatUsd = (cents: number) => (cents / 100).toLocaleString(undefined, { style: 'currency', currency: 'USD' })
 
-  const deltaCents = computeUpgradeDeltaCents()
-  const currentKey = tier.includes('general') ? 'general' : tier.includes('vip') ? 'vip' : 'platinum'
-  const currentName = HUMAN_TIER_NAME[currentKey]
-  const currentPaid = PRICE_BY_TIER[currentKey] || 0
+  // Determine effective ticket tier: prefer "became" if present (post-upgrade), otherwise use tier
+  const effectiveTierKey = became || tier
+  const effectiveName = HUMAN_TIER_NAME[effectiveTierKey] || HUMAN_TIER_NAME[tier] || 'Ticket'
+  const effectivePrice = PRICE_BY_TIER[effectiveTierKey] ?? PRICE_BY_TIER[tier] ?? 0
 
-  const handleUpgrade = () => {
-    const origin = window.location.origin
-    const url = new URL('/api/upgrade-checkout', origin)
-    url.searchParams.set('tier', upgradeTarget || '')
-    url.searchParams.set('from', tier.includes('general') ? 'general' : tier.includes('vip') ? 'vip' : 'platinum')
-    url.searchParams.set('origin', origin)
-    if (previousSessionId) {
-      url.searchParams.set('from_session_id', previousSessionId)
-    }
-    window.location.href = url.toString()
-  }
+  const isAddonReceipt = addon in ADDON_PRICE
+  const addonName = ADDON_NAME[addon] || 'Add-on'
+  const addonPrice = ADDON_PRICE[addon] || 0
+  const totalAmount = isAddonReceipt ? effectivePrice + addonPrice : effectivePrice
 
-  // Persist completed checkout on thank-you load (fallback if webhook didn't reach server)
   React.useEffect(() => {
     if (!previousSessionId) return
     let didRun = false
@@ -87,20 +63,18 @@ const ThankYou: React.FC = () => {
         if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
           // @ts-ignore
           window.gtag('event', 'purchase', {
-            value: currentPaid / 100,
+            value: totalAmount / 100,
             currency: 'USD',
-            tier: currentKey,
+            tier: effectiveTierKey || tier,
             session_id: previousSessionId,
           })
         }
       } catch {}
     }
     persist()
-    // no cleanup needed
-  }, [previousSessionId, currentPaid, currentKey])
+  }, [previousSessionId, totalAmount, effectiveTierKey, tier])
 
   React.useEffect(() => {
-    // Redirect to OTO if not completed and we have session
     if (!doneOto && previousSessionId && tier) {
       const origin = window.location.origin
       const url = new URL('/oto', origin)
@@ -113,13 +87,68 @@ const ThankYou: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg overflow-hidden text-center p-10 transition-all">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Thank you!</h1>
-        <p className="text-base text-gray-600 mb-2">Your order has been received.</p>
-        <p className="text-sm text-gray-500 mb-8">You purchased: <span className="font-semibold text-gray-900">{currentName}</span> for <span className="font-semibold text-gray-900">{formatUsd(currentPaid)}</span></p>
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-lg overflow-hidden p-0 transition-all">
+        <div className="flex flex-col md:flex-row">
+          {/* Left: Confirmation summary */}
+          <div className="md:w-1/2 p-8 border-b md:border-b-0 md:border-r border-gray-100">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-900 text-xs font-semibold mb-4">
+              <CheckCircle2 className="w-4 h-4" /> Payment confirmed
+            </div>
+            <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Thank you!</h1>
+            <p className="text-gray-600 mb-6">Your order has been received.</p>
 
-        <div className="grid grid-cols-1 gap-3">
-          <Button variant="outline" onClick={() => router.push('/')}>Return Home</Button>
+            <div className="rounded-xl border border-gray-200 p-5 bg-gradient-to-b from-white to-gray-50 text-left">
+              <div className="flex items-center gap-3 mb-4">
+                <Receipt className="w-5 h-5 text-gray-700" />
+                <div className="text-sm text-gray-500">Order Summary</div>
+              </div>
+              {isAddonReceipt ? (
+                <>
+                  <div className="flex items-center justify-between text-gray-800 mb-1">
+                    <div className="font-medium">{effectiveName} (Ticket)</div>
+                    <div className="font-semibold">{formatUsd(effectivePrice)}</div>
+                  </div>
+                  <div className="flex items-center justify-between text-gray-800">
+                    <div className="font-medium">{addonName} (Add-on)</div>
+                    <div className="font-semibold">{formatUsd(addonPrice)}</div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t flex items-center justify-between text-gray-900">
+                    <div className="font-semibold">Total</div>
+                    <div className="font-extrabold">{formatUsd(totalAmount)}</div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-between text-gray-800">
+                  <div className="font-medium">{effectiveName}</div>
+                  <div className="font-semibold">{formatUsd(effectivePrice)}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-3 text-left">
+              <Button variant="outline" onClick={() => router.push('/')} className="justify-center">
+                <Home className="w-4 h-4 mr-2" /> Return Home
+              </Button>
+            </div>
+          </div>
+
+          {/* Right: Event details */}
+          <div className="md:w-1/2 p-8 bg-gray-50">
+            <div className="flex items-center gap-3 mb-4">
+              <CalendarIcon className="w-5 h-5 text-gray-700" />
+              <div className="text-sm text-gray-600">Event Details</div>
+            </div>
+            <ul className="space-y-2 text-left text-gray-800">
+              <li><span className="font-medium">Dates:</span> October 23–24, 2025</li>
+              <li><span className="font-medium">Location:</span> Hilton Garden Inn, 2271 S Washington Blvd, Ogden, UT</li>
+              <li><span className="font-medium">Day 1:</span> Registration 9:00 AM | Sessions 9:30 AM – 5:00 PM</li>
+              <li><span className="font-medium">Day 2:</span> Half-Day 9:00 AM – 12:00 PM</li>
+            </ul>
+
+            <div className="mt-6 text-sm text-gray-600">
+              We’ve emailed your receipt and calendar links. We’ll send reminders as the event gets closer.
+            </div>
+          </div>
         </div>
       </div>
     </div>

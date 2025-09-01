@@ -58,6 +58,35 @@ const Navigation: React.FC<NavigationProps> = ({ onVideoPlay }) => {
           <button onClick={() => scrollToSection('pricing')} className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-6 py-2 rounded-lg font-semibold hover:from-yellow-600 hover:to-yellow-700 transition-all">
             Buy Tickets Now
           </button>
+          {process.env.NODE_ENV !== 'production' && (
+            <button
+              onClick={async () => {
+                const to = window.prompt('Enter email to send test Thank You:')
+                if (!to) return
+                const origin = window.location.origin
+                const tier = window.prompt('Tier? general | vip | platinum', 'general') || 'general'
+                try {
+                  const res = await fetch('/api/test/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to, tier, origin }),
+                  })
+                  if (!res.ok) {
+                    const j = await res.json().catch(() => ({} as any))
+                    alert('Failed: ' + (j.error || res.statusText))
+                  } else {
+                    alert('Email sent (check inbox/spam).')
+                  }
+                } catch (e: any) {
+                  alert('Error: ' + (e?.message || 'unknown'))
+                }
+              }}
+              className="ml-2 text-xs px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+              title="Send a test thank-you email (dev only)"
+            >
+              Send Test Email
+            </button>
+          )}
         </div>
 
         <button 

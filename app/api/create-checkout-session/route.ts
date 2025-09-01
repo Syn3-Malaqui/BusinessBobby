@@ -43,6 +43,7 @@ export async function POST(req: Request) {
         fullName: fullName || '',
         contactNumber: contactNumber || '',
         isUpgrade: 'false',
+        origin: origin || '',
       },
       allow_promotion_codes: true,
       success_url: `${origin}/oto?step=1&base=${tier}&session_id={CHECKOUT_SESSION_ID}`,

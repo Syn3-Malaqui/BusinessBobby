@@ -11,6 +11,7 @@ export async function GET(req: Request) {
     const origin = String(url.searchParams.get('origin') || '')
     const fromSessionId = String(url.searchParams.get('from_session_id') || '')
     const baseTier = String(url.searchParams.get('base') || currentTier || '')
+    const otoStep = String(url.searchParams.get('oto_step') || '')
     if (!origin || !addon) return new NextResponse('Invalid request', { status: 400 })
 
     const amountCents = ADDON_AMOUNTS[addon]
@@ -29,11 +30,19 @@ export async function GET(req: Request) {
     const metadata = {
       isAddon: 'true',
       addonCode: addon,
-      selectedTier: currentTier || (priorMetadata.selectedTier as string) || baseTier || '',
+      // Prefer prior selected tier if we came from an upgrade, then current/base
+      selectedTier: (priorMetadata.selectedTier as string) || currentTier || baseTier || '',
       fullName: (priorMetadata.fullName as string) || '',
       contactNumber: (priorMetadata.contactNumber as string) || '',
       fromSessionId: fromSessionId || '',
+      origin,
+      // OTO2 is an add-on, not an upgrade
+      isUpgrade: 'false',
+      otoStep: otoStep || '2',
+      otoKind: 'addon',
     }
+
+    const tierForThankYou = (metadata.selectedTier as string) || currentTier || baseTier
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -50,7 +59,7 @@ export async function GET(req: Request) {
       customer: customerId || undefined,
       metadata,
       allow_promotion_codes: true,
-      success_url: `${origin}/thank-you?tier=${currentTier || baseTier}&session_id={CHECKOUT_SESSION_ID}&addon=${addon}&doneOto=1`,
+      success_url: `${origin}/thank-you?tier=${tierForThankYou}&session_id={CHECKOUT_SESSION_ID}&addon=${addon}&doneOto=1`,
       cancel_url: `${origin}/?canceled=true`,
     })
     return NextResponse.redirect(session.url!, 303)
