@@ -41,6 +41,15 @@ const Index: React.FC = () => {
       sessionStorage.removeItem('wasOnCheckoutPage');
     }
 
+    // Method 3.5: Check URL parameter for checkout navigation
+    if (searchParams.get('goingToCheckout') === 'true') {
+      console.log('User is going to checkout (URL parameter detected)');
+      // Clear this parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('goingToCheckout');
+      router.replace(newUrl.pathname + newUrl.search);
+    }
+
     // Method 4: Check browser history length to detect back navigation
     if (window.history.length > 1 && !returningFromCheckout) {
       // If we have history and no other method detected, check if we might be returning from checkout

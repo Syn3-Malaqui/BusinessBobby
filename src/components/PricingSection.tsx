@@ -160,6 +160,12 @@ const PricingSection: React.FC<PricingSectionProps> = ({ isReturningFromCheckout
         sessionStorage.setItem('checkoutUrl', data.url);
         
         console.log('Redirecting to checkout, setting session flags');
+        
+        // Add a flag to the current URL to track checkout navigation
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('goingToCheckout', 'true');
+        window.history.replaceState({}, '', currentUrl.toString());
+        
         window.location.href = data.url;
       } else {
         throw new Error('No checkout URL received');
