@@ -1,10 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-const PricingSection: React.FC = () => {
+interface PricingSectionProps {
+  isReturningFromCheckout?: boolean;
+}
+
+const PricingSection: React.FC<PricingSectionProps> = ({ isReturningFromCheckout = false }) => {
   const tiers = [
     {
       name: 'General Admission',
@@ -81,7 +85,21 @@ const PricingSection: React.FC = () => {
     return hasName && hasPhone && hasEmail;
   }, [fullName, contactNumber, email]);
 
+  // Prevent modal from opening if user is returning from checkout
+  useEffect(() => {
+    if (isReturningFromCheckout) {
+      console.log('Preventing modal from opening - user returned from checkout');
+      setIsDialogOpen(false);
+    }
+  }, [isReturningFromCheckout]);
+
   const handleOpenForTier = (tierName: string) => {
+    // Don't open modal if user is returning from checkout
+    if (isReturningFromCheckout) {
+      console.log('Modal blocked - user returned from checkout');
+      return;
+    }
+    
     setSelectedTier(tierName);
     setError(null);
     setIsDialogOpen(true);
@@ -137,6 +155,11 @@ const PricingSection: React.FC = () => {
       console.log('Checkout response:', data);
       
       if (data?.url) {
+        // Set flag to track that user is going to checkout
+        sessionStorage.setItem('wasOnCheckoutPage', 'true');
+        sessionStorage.setItem('checkoutUrl', data.url);
+        
+        console.log('Redirecting to checkout, setting session flags');
         window.location.href = data.url;
       } else {
         throw new Error('No checkout URL received');

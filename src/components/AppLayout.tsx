@@ -11,7 +11,11 @@ import ContactSection from './ContactSection';
 import FAQSection from './FAQSection';
 import Footer from './Footer';
 
-const AppLayout: React.FC = () => {
+interface AppLayoutProps {
+  isReturningFromCheckout?: boolean;
+}
+
+const AppLayout: React.FC<AppLayoutProps> = ({ isReturningFromCheckout = false }) => {
   const videoSectionRef = useRef<VideoSectionRef>(null);
 
   const handleVideoPlay = () => {
@@ -31,7 +35,7 @@ const AppLayout: React.FC = () => {
       <BenefitsSection />
       <LearnSection />
       <SpeakersSection />
-      <PricingSection />
+      <PricingSection isReturningFromCheckout={isReturningFromCheckout} />
       <ContactSection />
       <FAQSection />
       <Footer />
