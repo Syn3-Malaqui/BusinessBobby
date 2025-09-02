@@ -67,7 +67,7 @@ export async function GET(req: Request) {
       metadata: mergedMetadata,
       allow_promotion_codes: true,
       success_url: `${origin}/oto?step=2&base=${baseTier}&became=${tier}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/?canceled=true`,
+      cancel_url: `https://www.servetoscale.ai/?canceled=true`,
     })
 
     return NextResponse.redirect(session.url!, 303)

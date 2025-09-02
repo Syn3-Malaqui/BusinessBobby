@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       },
       allow_promotion_codes: true,
       success_url: `${origin}/oto?step=1&base=${tier}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/?canceled=true`,
+      cancel_url: `https://www.servetoscale.ai/?canceled=true`,
     })
 
     console.log('Stripe session created:', { sessionId: session.id, url: session.url })

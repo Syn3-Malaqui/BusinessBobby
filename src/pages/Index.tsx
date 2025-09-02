@@ -12,6 +12,8 @@ const Index: React.FC = () => {
     // If user is returning from canceled Stripe checkout, clear the URL parameter
     // to prevent any unwanted modal popups
     if (searchParams.get('canceled') === 'true') {
+      console.log('User returned from canceled Stripe checkout, clearing URL parameter');
+      
       // Remove the canceled parameter from the URL
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete('canceled');

@@ -60,7 +60,7 @@ export async function GET(req: Request) {
       metadata,
       allow_promotion_codes: true,
       success_url: `${origin}/thank-you?tier=${tierForThankYou}&session_id={CHECKOUT_SESSION_ID}&addon=${addon}&doneOto=1`,
-      cancel_url: `${origin}/?canceled=true`,
+      cancel_url: `https://www.servetoscale.ai/?canceled=true`,
     })
     return NextResponse.redirect(session.url!, 303)
   } catch (err) {
