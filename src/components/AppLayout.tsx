@@ -13,9 +13,10 @@ import Footer from './Footer';
 
 interface AppLayoutProps {
   isReturningFromCheckout?: boolean;
+  resetCheckoutState: () => void;
 }
 
-const AppLayout: React.FC<AppLayoutProps> = ({ isReturningFromCheckout = false }) => {
+const AppLayout: React.FC<AppLayoutProps> = ({ isReturningFromCheckout = false, resetCheckoutState }) => {
   const videoSectionRef = useRef<VideoSectionRef>(null);
 
   const handleVideoPlay = () => {
@@ -35,7 +36,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ isReturningFromCheckout = false }
       <BenefitsSection />
       <LearnSection />
       <SpeakersSection />
-      <PricingSection isReturningFromCheckout={isReturningFromCheckout} />
+      <PricingSection 
+        isReturningFromCheckout={isReturningFromCheckout} 
+        resetCheckoutState={resetCheckoutState}
+      />
       <ContactSection />
       <FAQSection />
       <Footer />

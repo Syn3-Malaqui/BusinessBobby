@@ -9,6 +9,27 @@ const Index: React.FC = () => {
   const router = useRouter();
   const [isReturningFromCheckout, setIsReturningFromCheckout] = useState(false);
 
+  // Function to reset the checkout state when user wants to make a new purchase
+  const resetCheckoutState = () => {
+    console.log('Resetting checkout state - user wants to make new purchase');
+    setIsReturningFromCheckout(false);
+    // Also clear any remaining session storage
+    sessionStorage.removeItem('wasOnCheckoutPage');
+    sessionStorage.removeItem('checkoutUrl');
+  };
+
+  // Auto-reset checkout state after 30 seconds to allow users to make new purchases
+  useEffect(() => {
+    if (isReturningFromCheckout) {
+      const timer = setTimeout(() => {
+        console.log('Auto-resetting checkout state after timeout');
+        resetCheckoutState();
+      }, 30000); // 30 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [isReturningFromCheckout]);
+
   useEffect(() => {
     // Check if user is returning from Stripe checkout (multiple detection methods)
     let returningFromCheckout = false;
@@ -68,7 +89,10 @@ const Index: React.FC = () => {
 
   return (
     <AppProvider>
-      <AppLayout isReturningFromCheckout={isReturningFromCheckout} />
+      <AppLayout 
+        isReturningFromCheckout={isReturningFromCheckout} 
+        resetCheckoutState={resetCheckoutState}
+      />
     </AppProvider>
   );
 };

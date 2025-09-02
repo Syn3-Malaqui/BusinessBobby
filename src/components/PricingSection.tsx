@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 
 interface PricingSectionProps {
   isReturningFromCheckout?: boolean;
+  resetCheckoutState: () => void;
 }
 
-const PricingSection: React.FC<PricingSectionProps> = ({ isReturningFromCheckout = false }) => {
+const PricingSection: React.FC<PricingSectionProps> = ({ isReturningFromCheckout = false, resetCheckoutState }) => {
   const tiers = [
     {
       name: 'General Admission',
@@ -85,19 +86,14 @@ const PricingSection: React.FC<PricingSectionProps> = ({ isReturningFromCheckout
     return hasName && hasPhone && hasEmail;
   }, [fullName, contactNumber, email]);
 
-  // Prevent modal from opening if user is returning from checkout
-  useEffect(() => {
-    if (isReturningFromCheckout) {
-      console.log('Preventing modal from opening - user returned from checkout');
-      setIsDialogOpen(false);
-    }
-  }, [isReturningFromCheckout]);
+  // Note: We no longer automatically close the modal when returning from checkout
+  // Instead, we reset the state when user wants to make a new purchase
 
   const handleOpenForTier = (tierName: string) => {
-    // Don't open modal if user is returning from checkout
+    // If user is returning from checkout but wants to make a new purchase, reset the state
     if (isReturningFromCheckout) {
-      console.log('Modal blocked - user returned from checkout');
-      return;
+      console.log('User wants to make new purchase, resetting checkout state');
+      resetCheckoutState();
     }
     
     setSelectedTier(tierName);
